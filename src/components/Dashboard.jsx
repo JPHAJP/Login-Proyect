@@ -53,9 +53,13 @@ export const Dashboard = () => {
                 </span>
               </div>
               <div className="profile-status">
-                <span className={`status-indicator ${user.is_authorized ? 'authorized' : 'pending'}`}>
+                <span className={`status-indicator ${
+                  user.authorization_status === 'authorized' || user.is_authorized ? 'authorized' : 
+                  user.authorization_status === 'unauthorized' ? 'unauthorized' : 'pending'
+                }`}>
                   <span className="status-dot"></span>
-                  {user.is_authorized ? 'Cuenta Autorizada' : 'Pendiente de Autorización'}
+                  {user.authorization_status === 'authorized' || user.is_authorized ? 'Cuenta Autorizada' : 
+                   user.authorization_status === 'unauthorized' ? 'Cuenta Desautorizada' : 'Pendiente de Autorización'}
                 </span>
               </div>
             </div>

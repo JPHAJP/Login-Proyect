@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import './components.css';
 
 export const PendingUser = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isUnauthorized, isPending } = useAuth();
 
   const handleLogout = () => {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
@@ -11,18 +11,57 @@ export const PendingUser = () => {
     }
   };
 
+  // Determinar título y mensaje según el estado
+  const getStatusInfo = () => {
+    if (isUnauthorized) {
+      return {
+        title: 'Cuenta Desautorizada',
+        message: `Hola ${user.nombre_completo}, tu cuenta ha sido desautorizada.`,
+        detail: user.authorization_info || 'Contacta al administrador para más información.',
+        icon: '🚫',
+        statusClass: 'unauthorized'
+      };
+    } else if (isPending) {
+      return {
+        title: 'Cuenta Pendiente de Autorización',
+        message: `Hola ${user.nombre_completo}, tu cuenta ha sido creada exitosamente pero está pendiente de autorización por parte de un administrador.`,
+        detail: 'Te notificaremos por email cuando tu cuenta sea autorizada y puedas acceder completamente al sistema.',
+        icon: '⏳',
+        statusClass: 'pending'
+      };
+    } else {
+      return {
+        title: 'Estado de Cuenta',
+        message: `Hola ${user.nombre_completo}, hay un problema con tu cuenta.`,
+        detail: 'Contacta al administrador para más información.',
+        icon: '❓',
+        statusClass: 'unknown'
+      };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <div className="auth-container">
-      <div className="pending-message">
-        <h2>Cuenta Pendiente de Autorización</h2>
-        <p>
-          Hola <strong>{user.nombre_completo}</strong>, tu cuenta ha sido creada exitosamente 
-          pero está pendiente de autorización por parte de un administrador.
-        </p>
-        <p>
-          Te notificaremos por email cuando tu cuenta sea autorizada y puedas acceder 
-          completamente al sistema.
-        </p>
+      <div className={`pending-message ${statusInfo.statusClass}`}>
+        <div className="status-icon">{statusInfo.icon}</div>
+        <h2>{statusInfo.title}</h2>
+        <p>{statusInfo.message}</p>
+        <p>{statusInfo.detail}</p>
+        
+        {isUnauthorized && user.unauthorized_at && (
+          <div className="alert alert-error mt-3">
+            <strong>Fecha de desautorización:</strong>{' '}
+            {new Date(user.unauthorized_at).toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </div>
+        )}
         
         <div className="mt-4">
           <button 
@@ -53,10 +92,13 @@ export const PendingUser = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Rol Solicitado</label>
+                <label className="form-label">Estado de Autorización</label>
                 <div className="user-info-display">
-                  <span className={`role-badge ${user.role}`}>
-                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  <span className={`role-badge ${statusInfo.statusClass}`}>
+                    {user.authorization_status === 'pending' ? 'Pendiente' : 
+                     user.authorization_status === 'unauthorized' ? 'Desautorizada' :
+                     user.authorization_status === 'authorized' ? 'Autorizada' :
+                     user.is_authorized ? 'Autorizada (Legacy)' : 'Pendiente'}
                   </span>
                 </div>
               </div>

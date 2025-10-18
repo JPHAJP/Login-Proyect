@@ -8,11 +8,17 @@ import { Dashboard } from './Dashboard';
 import { AdminPanel } from './AdminPanel';
 import { PendingUser } from './PendingUser';
 import { Navbar } from './Navbar';
+import QRScanner from './QRScanner';
+import QRDisplay from './QRDisplay';
+import AccessManagement from './AccessManagement';
+import ProfilePage from './ProfilePage';
+import UserSearch from './UserSearch';
+
 import './components.css';
 
 // Componente para rutas protegidas
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+const ProtectedRoute = ({ children, requireAdmin = false, requireQRAccess = false }) => {
+  const { isAuthenticated, user, loading, isPending, isAuthorized, isUnauthorized, canAccessQR } = useAuth();
 
   if (loading) {
     return (
@@ -27,12 +33,34 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Si el usuario no está autorizado, mostrar pantalla pendiente
-  if (!user.is_authorized) {
+  // Si el usuario no puede acceder (estado pending), mostrar pantalla pendiente
+  if (isPending) {
     return (
       <>
         <Navbar />
-        <PendingUser />
+        <div className="main-content">
+          <PendingUser />
+        </div>
+      </>
+    );
+  }
+
+  // Si el usuario está desautorizado y intenta acceder a QR
+  if (requireQRAccess && !canAccessQR) {
+    return (
+      <>
+        <Navbar />
+        <div className="main-content">
+          <div className="alert alert-error">
+            <h3>Acceso Restringido</h3>
+            <p>
+              {isUnauthorized 
+                ? 'Tu acceso ha sido desautorizado. No puedes usar las funcionalidades QR.' 
+                : 'Tu cuenta no tiene autorización para acceder a las funcionalidades QR.'}
+            </p>
+            <p>Si crees que esto es un error, contacta al administrador.</p>
+          </div>
+        </div>
       </>
     );
   }
@@ -45,14 +73,16 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   return (
     <>
       <Navbar />
-      {children}
+      <div className="main-content">
+        {children}
+      </div>
     </>
   );
 };
 
 // Componente para rutas públicas (solo cuando no está autenticado)
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, loading, isPending } = useAuth();
 
   if (loading) {
     return (
@@ -64,8 +94,8 @@ const PublicRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    // Si está autenticado pero no autorizado
-    if (!user.is_authorized) {
+    // Si está autenticado pero pendiente de autorización
+    if (isPending) {
       return <Navigate to="/pending" replace />;
     }
     
@@ -96,7 +126,7 @@ const AppRoutes = () => {
 
       <Route path="/profile" element={
         <ProtectedRoute>
-          <Dashboard />
+          <ProfilePage />
         </ProtectedRoute>
       } />
 
@@ -105,6 +135,32 @@ const AppRoutes = () => {
           <AdminPanel />
         </ProtectedRoute>
       } />
+
+      <Route path="/access" element={
+        <ProtectedRoute requireQRAccess={true}>
+          <QRScanner />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/admin/access" element={
+        <ProtectedRoute requireAdmin={true}>
+          <AccessManagement />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/admin/users" element={
+        <ProtectedRoute requireAdmin={true}>
+          <UserSearch />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/admin/qr" element={
+        <ProtectedRoute requireAdmin={true}>
+          <QRDisplay />
+        </ProtectedRoute>
+      } />
+
+
 
       <Route path="/pending" element={
         <ProtectedRoute>

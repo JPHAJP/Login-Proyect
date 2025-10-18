@@ -1,32 +1,41 @@
 import React from 'react';
+import logoImage from '../assets/LogoCasaDelSol2-980x493.png';
 
 export const CasaDelSolLogo = ({ size = 'large' }) => {
-  const sizeClasses = {
-    small: 'logo-small',
-    medium: 'logo-medium',
-    large: 'logo-large'
+  const sizes = {
+    small: {
+      width: 'w-24',
+      height: 'h-12',
+      textSize: 'text-sm'
+    },
+    medium: {
+      width: 'w-48',
+      height: 'h-24',
+      textSize: 'text-base'
+    },
+    large: {
+      width: 'w-80',
+      height: 'h-40',
+      textSize: 'text-lg'
+    }
   };
 
+  const currentSize = sizes[size];
+
   return (
-    <div className={`casa-sol-logo ${sizeClasses[size]}`}>
-      <div className="logo-container">
-        <div className="sun-rays">
-          <div className="ray ray-1"></div>
-          <div className="ray ray-2"></div>
-          <div className="ray ray-3"></div>
-          <div className="ray ray-4"></div>
-          <div className="ray ray-5"></div>
-          <div className="ray ray-6"></div>
-          <div className="ray ray-7"></div>
-          <div className="ray ray-8"></div>
-        </div>
-        <div className="sun-center">
-          <div className="house-icon">🏠</div>
-        </div>
+    <div className="flex flex-col items-center text-center mb-8">
+      <div className="mb-4">
+        <img 
+          src={logoImage} 
+          alt="Casa del Sol - Centro de Bienestar" 
+          className={`${currentSize.width} ${currentSize.height} object-contain mx-auto drop-shadow-lg`}
+        />
       </div>
-      <div className="logo-text">
-        <div className="brand-name">Casa del Sol</div>
-        <div className="brand-subtitle">Centro de Bienestar</div>
+      
+      <div className="text-center">
+        <div className={`${currentSize.textSize} text-gray-600 font-medium`}>
+          Centro de Bienestar
+        </div>
       </div>
     </div>
   );
