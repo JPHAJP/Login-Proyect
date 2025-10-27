@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // 🌐 Configuración de la API
-//const API_BASE_URL = 'https://api-login-uqgo.onrender.com';
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://api-login-uqgo.onrender.com';
+//const API_BASE_URL = 'http://localhost:8000';
 
 // ✅ Configuración base de Axios con CORS
 const apiClient = axios.create({
