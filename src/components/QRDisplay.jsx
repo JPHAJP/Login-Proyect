@@ -61,10 +61,11 @@ const QRDisplay = () => {
       setCurrentQR(qrData);
       
       if (qrData.expires_at) {
+        // El servidor envía fecha en UTC (ISO string con Z), JavaScript la interpreta correctamente
         const expiry = new Date(qrData.expires_at);
         setQrExpiry(expiry);
         calculateTimeLeft(expiry);
-        console.log('⏰ QR expira en:', expiry);
+        console.log('⏰ QR expira en (UTC):', expiry.toISOString(), 'Local:', expiry.toLocaleString());
       }
       
       if (isAutoRefresh) {
@@ -118,8 +119,15 @@ const QRDisplay = () => {
   };
 
   const calculateTimeLeft = (expiry) => {
+    // Asegurar que ambas fechas estén en UTC para cálculo correcto
     const now = new Date();
-    const diff = Math.max(0, Math.floor((expiry - now) / 1000));
+    const diff = Math.max(0, Math.floor((expiry.getTime() - now.getTime()) / 1000));
+    console.log('🕐 Cálculo tiempo restante:', {
+      expiryUTC: expiry.toISOString(),
+      nowLocal: now.toISOString(),
+      diffSeconds: diff,
+      diffMinutes: Math.floor(diff / 60)
+    });
     setTimeLeft(diff);
   };
 
