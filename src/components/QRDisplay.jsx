@@ -61,11 +61,31 @@ const QRDisplay = () => {
       setCurrentQR(qrData);
       
       if (qrData.expires_at) {
-        // El servidor envía fecha en UTC (ISO string con Z), JavaScript la interpreta correctamente
-        const expiry = new Date(qrData.expires_at);
+        // El servidor envía fecha en UTC (formato ISO con Z)
+        // Asegurar que se interprete correctamente como UTC
+        let expiry;
+        
+        // Parsear la fecha del servidor (que viene en UTC)
+        expiry = new Date(qrData.expires_at);
+        
+        // TEMPORAL: Si detectamos que hay problema de zona horaria, 
+        // ajustar manualmente (México es UTC-6)
+        const timezoneOffset = new Date().getTimezoneOffset(); // minutos
+        console.log('⏰ Zona horaria detectada:', timezoneOffset, 'minutos de diferencia con UTC');
+        
+        // Si estamos en zona UTC-6 (México), timezoneOffset será 360 minutos
+        // El servidor está en UTC+0, así que no necesitamos ajuste si se parsea correctamente
+        
+        console.log('📅 DEBUG Fecha procesada:', {
+          'Raw del servidor': qrData.expires_at,
+          'Fecha parseada': expiry.toISOString(),
+          'Hora local equivalente': expiry.toLocaleString(),
+          'Timestamp UTC': expiry.getTime(),
+          'Zona horaria offset (min)': expiry.getTimezoneOffset()
+        });
+        
         setQrExpiry(expiry);
         calculateTimeLeft(expiry);
-        console.log('⏰ QR expira en (UTC):', expiry.toISOString(), 'Local:', expiry.toLocaleString());
       }
       
       if (isAutoRefresh) {
@@ -119,15 +139,30 @@ const QRDisplay = () => {
   };
 
   const calculateTimeLeft = (expiry) => {
-    // Asegurar que ambas fechas estén en UTC para cálculo correcto
+    // Obtener timestamp actual en UTC
     const now = new Date();
-    const diff = Math.max(0, Math.floor((expiry.getTime() - now.getTime()) / 1000));
-    console.log('🕐 Cálculo tiempo restante:', {
-      expiryUTC: expiry.toISOString(),
-      nowLocal: now.toISOString(),
-      diffSeconds: diff,
-      diffMinutes: Math.floor(diff / 60)
+    
+    // Ambos timestamps están en UTC (milisegundos desde epoch)
+    // getTime() siempre devuelve UTC timestamp independientemente de zona horaria
+    const expiryTime = expiry.getTime();
+    const nowTime = now.getTime();
+    
+    const diffMs = expiryTime - nowTime;
+    const diff = Math.max(0, Math.floor(diffMs / 1000));
+    
+    console.log('🕐 DEBUG Cálculo QR:', {
+      'Expiry UTC': expiry.toISOString(),
+      'Now Local': now.toISOString(), 
+      'Now UTC equiv': new Date(nowTime).toISOString(),
+      'Expiry timestamp': expiryTime,
+      'Now timestamp': nowTime,
+      'Diferencia ms': diffMs,
+      'Diferencia seg': diff,
+      'Diferencia min': (diff / 60).toFixed(2),
+      'Offset zona (min)': now.getTimezoneOffset(),
+      'Es futuro': diffMs > 0
     });
+    
     setTimeLeft(diff);
   };
 
