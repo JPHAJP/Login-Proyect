@@ -65,16 +65,24 @@ const QRDisplay = () => {
         // Asegurar que se interprete correctamente como UTC
         let expiry;
         
-        // Parsear la fecha del servidor (que viene en UTC)
-        expiry = new Date(qrData.expires_at);
+        // PROBLEMA IDENTIFICADO: El servidor envía fecha SIN 'Z' al final
+        // JavaScript la interpreta como hora local y añade el offset de zona horaria
         
-        // TEMPORAL: Si detectamos que hay problema de zona horaria, 
-        // ajustar manualmente (México es UTC-6)
-        const timezoneOffset = new Date().getTimezoneOffset(); // minutos
-        console.log('⏰ Zona horaria detectada:', timezoneOffset, 'minutos de diferencia con UTC');
+        let expiryString = qrData.expires_at;
         
-        // Si estamos en zona UTC-6 (México), timezoneOffset será 360 minutos
-        // El servidor está en UTC+0, así que no necesitamos ajuste si se parsea correctamente
+        // Si la fecha no termina en 'Z', añadirla para forzar interpretación UTC
+        if (!expiryString.endsWith('Z')) {
+          expiryString = expiryString + 'Z';
+        }
+        
+        expiry = new Date(expiryString);
+        
+        console.log('🔧 CORRECCIÓN aplicada:', {
+          'Original del servidor': qrData.expires_at,
+          'Corregido para UTC': expiryString,
+          'Resultado parseado': expiry.toISOString(),
+          'Hora local equivalente': expiry.toLocaleString()
+        });
         
         console.log('📅 DEBUG Fecha procesada:', {
           'Raw del servidor': qrData.expires_at,
